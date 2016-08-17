@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>net.imagej</groupId>
+		<artifactId>pom-imagej</artifactId>
+		<version>16.0.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>net.imagej.mutterer</groupId>
+	<artifactId>action_bar</artifactId>
+	<version>2.0.5-SNAPSHOT</version>
+
+	<name>plugins/action_bar.jar</name>
+	<description>Custom toolbars and mini applications with ActionBar.</description>
+
+	<scm>
+		<connection>scm:git:git://github.com/mutterer/ActionBar</connection>
+		<developerConnection>scm:git:git@github.com/mutterer/ActionBar</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/mutterer/ActionBar</url>
+	</scm>
+
+	<properties>
+		<main-class>Action_Bar</main-class>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>bsh</groupId>
+			<artifactId>bsh</artifactId>
+			<version>2.0b4</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>${main-class}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

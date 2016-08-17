@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.plaf.metal.*;
 
@@ -22,6 +23,8 @@ import bsh.Interpreter;
 import java.lang.Runnable; 
 import java.lang.Thread; 
 
+import org.scijava.Context;
+import org.scijava.script.ScriptService;
 
 /**
 * @author Jerome Mutterer
@@ -500,7 +503,21 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 								break;
 							}
 						}
-					} if (arg.startsWith("<macro>")) {
+					} else if (arg.startsWith("<ijm>")) {
+						String code = "<ijm>";
+						while (true) {
+							String sc = r.readLine();
+							if (sc.equals(null)) {
+								break;
+							}
+							if (!sc.startsWith("</ijm>")) {
+								code = code + "\n" + sc;
+							} else {
+								arg = code;
+								break;
+							}
+						}
+					} else if (arg.startsWith("<macro>")) {
 						String code = "";
 						while (true) {
 							String sc = r.readLine();
@@ -652,6 +669,17 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				evalBeanshell(bshPath);
 				// IJ.showStatus("beanshell button:"+bshPath);
 				
+			} else if (cmd.startsWith("<ijm>")) {
+				String macro = cmd.substring(5, cmd.length()).trim();
+				Context context = (Context) IJ.runPlugIn("org.scijava.Context", "");
+				ScriptService scriptService = context.service(ScriptService.class);
+				try {
+					scriptService.run("actionBarButton.ijm", macro, true);
+				} catch (IOException exc) {
+					IJ.error("Error in ijm script");
+				} catch (ScriptException exc) {
+					IJ.error("Error in ijm script");
+				}
 			} else {
 				try {
 					new MacroRunner(cmd + "\n" + codeLibrary);
