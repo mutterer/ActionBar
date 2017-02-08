@@ -26,14 +26,14 @@ import java.lang.Thread;
 /**
 * @author Jerome Mutterer
 * @author Michael Schmid
-* date : 2016 07 28
-* version no : 206
+* date : 2015 09 15
+* version no : 203
 * 
 */
 
 public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, Runnable {
 	
-	public static final String VERSION = "2.06";
+	public static final String VERSION = "2.04";
 	Interpreter bsh;
 	String name, title, path;
 	String startupAction = "";
@@ -55,8 +55,6 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 	private boolean isPopup = false;
 	private boolean captureMenus = true;
 	private boolean isSticky = false;
-	private boolean altClose = true;
-	private boolean crtlAltEdit = true;
 	private boolean somethingWentWrong = false;
 	int nButtons = 0;
 	private Iterator iterator;
@@ -381,7 +379,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 
 			while (true) {
 				String s = r.readLine();
-				if (s==null) {
+				if (s.equals(null)) {
 					r.close();
 					closeToolBar();
 					break;
@@ -397,10 +395,6 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					isPopup = true;
 				} else if (s.startsWith("<sticky>")) {
 					isSticky = true;
-				} else if (s.startsWith("<disableAltClose>")) {
-					altClose = false;
-				}else if (s.startsWith("<disableCtrlAltEdit>")) {
-					crtlAltEdit = false;
 				} else if (s.startsWith("<DnD>")) {
 					setABDnD();
 				} else if (s.startsWith("<beanshell>")) {
@@ -411,7 +405,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					String code = "";
 					while (true) {
 						String sc = r.readLine();
-						if (sc==null) {
+						if (sc.equals(null)) {
 							break;
 						}
 						if (!sc.startsWith("</startupAction>")) {
@@ -425,7 +419,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					String code = "";
 					while (true) {
 						String sc = r.readLine();
-						if (sc==null) {
+						if (sc.equals(null)) {
 							break;
 						}
 						if (!sc.startsWith("</DnDAction>")) {
@@ -439,7 +433,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					String code = "";
 					while (true) {
 						String sc = r.readLine();
-						if (sc==null) {
+						if (sc.equals(null)) {
 							break;
 						}
 						if (!sc.startsWith("</codeLibrary>")) {
@@ -496,7 +490,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						String code = "<bsh>";
 						while (true) {
 							String sc = r.readLine();
-							if (sc==null) {
+							if (sc.equals(null)) {
 								break;
 							}
 							if (!sc.startsWith("</bsh>")) {
@@ -510,7 +504,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						String code = "";
 						while (true) {
 							String sc = r.readLine();
-							if (sc==null) {
+							if (sc.equals(null)) {
 								break;
 							}
 							if (!sc.startsWith("</macro>")) {
@@ -524,7 +518,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						String code = "<tool>\n";
 						while (true) {
 							String sc = r.readLine();
-							if (sc==null) {
+							if (sc.equals(null)) {
 								break;
 							}
 							if (!sc.startsWith("</tool>")) {
@@ -629,10 +623,10 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			
 			
 			if (((e.getModifiers() & e.ALT_MASK) * ((e.getModifiers() & e.CTRL_MASK))) != 0) {
-				if (!(path.startsWith("jar:")) && crtlAltEdit ) IJ.run("Edit...", "open=[" + path + "]");
+				if (!(path.startsWith("jar:"))) IJ.run("Edit...", "open=[" + path + "]");
 				return;
 			}
-			if ((((e.getModifiers() & e.ALT_MASK)) != 0) && altClose) {
+			if (((e.getModifiers() & e.ALT_MASK)) != 0) {
 				closeActionBar();
 				return;
 			}
