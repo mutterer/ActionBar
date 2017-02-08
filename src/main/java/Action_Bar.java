@@ -19,21 +19,21 @@ import java.util.*;
 import bsh.EvalError;
 import bsh.Interpreter;
 
-import java.lang.Runnable; 
-import java.lang.Thread; 
+import java.lang.Runnable;
+import java.lang.Thread;
 
 
 /**
 * @author Jerome Mutterer
 * @author Michael Schmid
-* date : 2015 09 15
-* version no : 203
-* 
+* date : 2016 07 28
+* version no : 206
+*
 */
 
 public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, Runnable {
-	
-	public static final String VERSION = "2.04";
+
+	public static final String VERSION = "2.06";
 	Interpreter bsh;
 	String name, title, path;
 	String startupAction = "";
@@ -55,6 +55,8 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 	private boolean isPopup = false;
 	private boolean captureMenus = true;
 	private boolean isSticky = false;
+	private boolean altClose = true;
+	private boolean crtlAltEdit = true;
 	private boolean somethingWentWrong = false;
 	int nButtons = 0;
 	private Iterator iterator;
@@ -67,18 +69,18 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 	private String imports;
 	private String bshPath;
 
-	
+
 	public void run(String s) {
 		// s used if called from another plugin, or from an installed command.
 		// arg used when called from a run("command", arg) macro function
 		// if both are empty, we choose to run the assistant "createAB.txt"
-		
+
         if (s.equals("about")) {
             showAbout();
             return;
         }
 		String arg = Macro.getOptions();
-		
+
 		if (arg == null && s.equals("")) {
 			try {
 				//File macro = new File(Action_Bar.class.getResource(
@@ -90,7 +92,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				IJ.error("createAB.txt file not found");
                 return;
 			}
-			
+
 		} else if (arg == null) { // call from an installed command
 			path = getURL(s);
 			//path = ijHome + s;
@@ -107,18 +109,18 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			} catch (Exception e) {
 			}
 		}
-		
+
 		// title = name.substring(0, name.indexOf("."));
 		title = name.substring((name.lastIndexOf("/")>0)?name.lastIndexOf("/")+1:0, name.lastIndexOf(".")).replaceAll("_", " ")
 		.trim();
-		
+
 		if (IJ.isMacintosh()) try {
 			UIManager.setLookAndFeel(new MetalLookAndFeel());
-		}	
+		}
 		catch(Exception e) {}
-		
+
 		frame.setTitle(title);
-		
+
 		if (WindowManager.getFrame(title) != null) {
 			WindowManager.getFrame(title).toFront();
 			return;
@@ -151,20 +153,20 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		}
 		// toolbars will be added as lines in a n(0) rows 1 column layout
 		frame.getContentPane().setLayout(new GridLayout(0, 1));
-		
+
 		// sets the bar's default icon to imagej icon
 		frame.setIconImage(IJ.getInstance().getIconImage());
-		
+
 		// read the config file, and add toolbars to the frame
 		designPanel();
-		
+
 		// captures the ImageJ KeyListener
 		frame.setFocusable(true);
 		frame.addKeyListener(IJ.getInstance());
-		
+
 		// setup the frame, and display it
 		frame.setResizable(false);
-		
+
 		if (!isPopup) {
 			frame.setLocation((int) Prefs
 				.get("actionbar" + title + ".xloc", 10), (int) Prefs.get(
@@ -176,10 +178,10 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			frame.addKeyListener(new KeyListener() {
 					public void keyReleased(KeyEvent e) {
 					}
-					
+
 					public void keyTyped(KeyEvent e) {
 					}
-					
+
 					public void keyPressed(KeyEvent e) {
 						int code = e.getKeyCode();
 						if (code == KeyEvent.VK_ESCAPE) {
@@ -189,13 +191,13 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					}
 			});
 		}
-		
+
 		if (isSticky) {
 			frame.setUndecorated(true);
 		}
 		frame.pack();
 		frame.setVisible(true);
-		
+
 		if (somethingWentWrong) {
 			closeActionBar();
 			return;
@@ -205,22 +207,22 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			new MacroRunner(startupAction + "\n" + codeLibrary);
 		} catch (Exception fe) {
 		}
-		
+
 		if (DnDAction != "")
 		try {
 			// attach custom DND listener here
 			new DropTarget(frame, this);
 		} catch (Exception fe) {
 		}
-		
+
 		if (IJ.macroRunning()!=true) WindowManager.setWindow(frontframe);
-		
+
 		if (isSticky) {
 			stickToActiveWindow();
 			while ((shouldExit==false)&& (frame.getTitle()!="xxxx")){
-				
+
 				if (IJ.macroRunning()!=true) try {
-					
+
 					ImageWindow fw = WindowManager.getCurrentWindow();
 					if (fw == null)
 						frame.setVisible(false);
@@ -243,7 +245,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			if ((shouldExit)) return;
 		}
     }
-		
+
 	         protected String getURL(String path) {
 	          if (path.startsWith("plugins/")) path = "/"+path;
                  if (path.startsWith("/")) {
@@ -262,7 +264,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						e.printStackTrace();
 					}
                  }
-                 
+
                  URL url = getClass().getResource(path);
                  if (url == null) {
                          url = getClass().getResource("/ActionBar/" + path);
@@ -272,7 +274,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
                  }
                  return url.toString();
          }
- 
+
          protected void runMacro(String path) {
                  String url = getURL(path);
                  if (url.startsWith("jar:")) try {
@@ -289,7 +291,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
                 IJ.handleException(e);
                  }
          }
- 
+
          protected String readString(InputStream in) {
                  BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                  StringBuffer buffer = new StringBuffer();
@@ -323,16 +325,16 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		
+
 	}
-	
+
 	private void closeActionBar() {
 		frame.dispose();
 		WindowManager.removeWindow(frame);
 		WindowManager.setWindow(frontframe);
 		shouldExit = true;
 	}
-	
+
 	private void updateButtons() {
 		Component[] a=frame.getContentPane().getComponents();
 		for(int i=0; i<a.length; i++) {
@@ -355,7 +357,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			}
 		}
 	}
-	
+
 	private void designPanel() {
 		try {
 // 			File file = new File(path);
@@ -379,7 +381,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 
 			while (true) {
 				String s = r.readLine();
-				if (s.equals(null)) {
+				if (s==null) {
 					r.close();
 					closeToolBar();
 					break;
@@ -395,6 +397,10 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					isPopup = true;
 				} else if (s.startsWith("<sticky>")) {
 					isSticky = true;
+				} else if (s.startsWith("<disableAltClose>")) {
+					altClose = false;
+				}else if (s.startsWith("<disableCtrlAltEdit>")) {
+					crtlAltEdit = false;
 				} else if (s.startsWith("<DnD>")) {
 					setABDnD();
 				} else if (s.startsWith("<beanshell>")) {
@@ -405,7 +411,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					String code = "";
 					while (true) {
 						String sc = r.readLine();
-						if (sc.equals(null)) {
+						if (sc==null) {
 							break;
 						}
 						if (!sc.startsWith("</startupAction>")) {
@@ -419,7 +425,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					String code = "";
 					while (true) {
 						String sc = r.readLine();
-						if (sc.equals(null)) {
+						if (sc==null) {
 							break;
 						}
 						if (!sc.startsWith("</DnDAction>")) {
@@ -433,7 +439,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					String code = "";
 					while (true) {
 						String sc = r.readLine();
-						if (sc.equals(null)) {
+						if (sc==null) {
 							break;
 						}
 						if (!sc.startsWith("</codeLibrary>")) {
@@ -472,7 +478,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					boolean argReached=false;
 					do {
 						String attribLine = r.readLine();
-						if (attribLine==null) { 
+						if (attribLine==null) {
 						break;
 						} else if (attribLine.trim().replace(" ","").startsWith("label=")){
 						label = attribLine.substring(attribLine.indexOf("=")+1);
@@ -483,14 +489,14 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						} else if (attribLine.trim().replace(" ","").startsWith("arg=")){
 						arg = attribLine.substring(attribLine.indexOf("=")+1);
 						argReached=true;
-						} 
+						}
 					} while (!argReached);
-					
+
 					if (arg.startsWith("<bsh>")) {
 						String code = "<bsh>";
 						while (true) {
 							String sc = r.readLine();
-							if (sc.equals(null)) {
+							if (sc==null) {
 								break;
 							}
 							if (!sc.startsWith("</bsh>")) {
@@ -504,7 +510,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						String code = "";
 						while (true) {
 							String sc = r.readLine();
-							if (sc.equals(null)) {
+							if (sc==null) {
 								break;
 							}
 							if (!sc.startsWith("</macro>")) {
@@ -518,7 +524,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						String code = "<tool>\n";
 						while (true) {
 							String sc = r.readLine();
-							if (sc.equals(null)) {
+							if (sc==null) {
 								break;
 							}
 							if (!sc.startsWith("</tool>")) {
@@ -534,7 +540,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 						arg = "<close>";
 					}
 					if (enabled!="") arg=arg+"<enabled>"+enabled;
-					
+
 					button = makeNavigationButton(icon, arg, label, label, bgcolor);
 					toolBar.add(button);
 					nButtons++;
@@ -544,14 +550,14 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		} catch (Exception e) {
 		}
 	}
-	
+
 	private void setupBeanshell() {
 		// TODO Auto-generated method stub
 		Object BStest = IJ.runPlugIn("bsh", "return 1;");
 		if ((BStest==null)&&!(IJ.getInstance().getTitle().indexOf("Fiji")>0)) {
 			IJ.error("Is BeanShell installed?");
 			somethingWentWrong=true;
-		} 
+		}
 		else bsh = new Interpreter();
 	}
 
@@ -562,10 +568,10 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		frame.getContentPane().add(toolBar);
 		tbOpenned = false;
 	}
-	
+
 	protected JButton makeNavigationButton(String imageName,
 		String actionCommand, String toolTipText, String altText, String color) {
-	
+
 	String imgLocation = imageName;
 	if (!imgLocation.startsWith("icons/" )) imgLocation = "icons/"+imageName;
 	URL imageURL = null;
@@ -583,14 +589,14 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		try {
 			File f = new File( IJ.getDirectory("plugins")+"ActionBar"+File.separator+imgLocation);
 			imageURL = f.toURI().toURL();
-		
+
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	JButton button = new JButton();
 	button.setActionCommand(actionCommand);
 	button.setMargin(new Insets(2, 2, 2, 2));
@@ -610,23 +616,23 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		if (color.startsWith("#")) button.setBackground(Colors.decode(color,Color.gray));
 		else button.setBackground(presetColors[Integer.parseInt(color)]);
 	}
-	
+
 	return button;
 		}
-		
+
 		public void actionPerformed(ActionEvent e) {
-			
+
 			String cmd = e.getActionCommand();
 			// IJ.log(cmd);
 			// remove the bit of macro that returns true is this button should be eenabled
 			if (cmd.indexOf("<enabled>")>-1) cmd = cmd.substring(0,cmd.indexOf("<enabled>"));
-			
-			
+
+
 			if (((e.getModifiers() & e.ALT_MASK) * ((e.getModifiers() & e.CTRL_MASK))) != 0) {
-				if (!(path.startsWith("jar:"))) IJ.run("Edit...", "open=[" + path + "]");
+				if (!(path.startsWith("jar:")) && crtlAltEdit ) IJ.run("Edit...", "open=[" + path + "]");
 				return;
 			}
-			if (((e.getModifiers() & e.ALT_MASK)) != 0) {
+			if ((((e.getModifiers() & e.ALT_MASK)) != 0) && altClose) {
 				closeActionBar();
 				return;
 			}
@@ -645,13 +651,13 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				new MacroInstaller().install(tool);
 				Toolbar.getInstance().setTool("ActionBarTool");
 				IJ.showStatus(toolname + " Tool installed");
-				
+
 			} else if (cmd.startsWith("<bsh>")) {
 				// do something with the path
 				bshPath = cmd.substring(5, cmd.length()).trim();
 				evalBeanshell(bshPath);
 				// IJ.showStatus("beanshell button:"+bshPath);
-				
+
 			} else {
 				try {
 					new MacroRunner(cmd + "\n" + codeLibrary);
@@ -665,9 +671,9 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				WindowManager.removeWindow(frame);
 				WindowManager.setWindow(frontframe);
 			}
-			
+
 		}
-		
+
 		private void evalBeanshell( final String bshScript) {
 			// TODO Auto-generated method stub
 			  imports =
@@ -689,16 +695,16 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					"print(arg) {IJ.log(\"\"+arg);}\n";
 			try {
 				if (bsh!=null) {
-					Thread newThread = new Thread(new Runnable() { 
-					    @Override 
-					    public void run() { 
+					Thread newThread = new Thread(new Runnable() {
+					    @Override
+					    public void run() {
 							try {
 								bsh.eval(imports+bshScript);
 							} catch (EvalError e) {
 								e.printStackTrace();
 							}
-					    } 
-					}); 
+					    }
+					});
 					newThread.start();
 				}
 				else {
@@ -708,7 +714,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			} catch(Throwable e) {
 				String msg = e.getMessage();
 					IJ.log(msg);
-				
+
 			}
 		}
 
@@ -716,17 +722,17 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			IJ.getInstance().setVisible(!IJ.getInstance().isVisible());
 			visible = IJ.getInstance().isVisible();
 		}
-		
+
 		private void hideIJ() {
 			IJ.getInstance().setVisible(false);
 			visible = false;
 		}
-		
+
 		protected void rememberXYlocation() {
 			Prefs.set("actionbar" + title + ".xloc", frame.getLocation().x);
 			Prefs.set("actionbar" + title + ".yloc", frame.getLocation().y);
 		}
-		
+
 		private void setABasMain() {
 			frame.addWindowListener(new WindowAdapter() {
 					public void windowClosing(WindowEvent e) {
@@ -736,14 +742,14 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					}
 			});
 		}
-		
+
 		private void setABDnD() {
 			DropTarget dt = new DropTarget(frame, IJ.getInstance().getDropTarget());
 		}
-		
+
 		private void setABIcon(String s) {
 			try {
-				
+
 				String imgLocation = "icons/" + s;
 				URL imageURL = getClass().getResource(imgLocation);
 				Image img=Toolkit.getDefaultToolkit().getImage(imageURL);
@@ -752,11 +758,11 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				IJ.error("Error creating the bar's icon");
 			}
 		}
-		
+
 		private void setABonTop() {
 			frame.setAlwaysOnTop(true);
 		}
-		
+
        public static void callFunctionFinder() {
                new FunctionFinder();
        }
@@ -808,13 +814,13 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
                          textArea.setCaretPosition(pos);
                  }
          }
- 
+
          protected static Component getTextArea() {
                  Frame front = WindowManager.getFrontWindow();
                  Component result = getTextArea(front);
                  if (result != null)
                          return result;
- 
+
                  // look at the other frames
                  Frame[] frames = WindowManager.getNonImageWindows();
                  for (int i = frames.length - 1; i >= 0; i--) {
@@ -824,11 +830,11 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
                  }
                  return null;
          }
- 
+
          protected static Component getTextArea(Container container) {
                  return getTextArea(container, 6);
          }
- 
+
          protected static Component getTextArea(Container container, int maxDepth) {
                  if (container == null)
                          return null;
@@ -843,7 +849,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
                  }
                  return null;
          }
-		
+
 		// Droptarget Listener methods
 		public void drop(DropTargetDropEvent dtde)  {
 			dtde.acceptDrop(DnDConstants.ACTION_COPY);
@@ -905,7 +911,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				sb.append(s.charAt(i));
 			return new String(sb);
 		}
-		
+
 		private String parseHTML(String s) {
 			if (IJ.debugMode) IJ.log("parseHTML:\n"+s);
 			int index1 = s.indexOf("src=\"");
@@ -922,22 +928,22 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			}
 			return s;
 		}
-		
+
 		public void dragEnter(DropTargetDragEvent e)  {
 			IJ.showStatus("Drop here!");
 			e.acceptDrag(DnDConstants.ACTION_COPY);
 		}
-		
+
 		public void dragOver(DropTargetDragEvent e) {
 			IJ.showStatus("Drop here!");
 		}
-		
+
 		public void dragExit(DropTargetEvent e) {
 			IJ.showStatus("Drag files to process");
 		}
-		
+
 		public void dropActionChanged(DropTargetDragEvent e) {}
-		
+
 		public void run() {
 			Iterator iterator = this.iterator;
 			while(iterator.hasNext()) {
@@ -953,7 +959,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			}
 			IJ.showStatus("Drag files to process");
 		}
-		
+
     void showAbout() {
         GenericDialog gd = new GenericDialog("About Action Bar...");
         gd.addMessage("Action Bar by Jerome Mutterer");
@@ -964,4 +970,3 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
         gd.showDialog();
     }
 }
-		
