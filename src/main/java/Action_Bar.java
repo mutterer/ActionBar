@@ -3,6 +3,9 @@ import ij.gui.*;
 import ij.plugin.*;
 import ij.macro.*;
 
+import org.scijava.Context;
+import org.scijava.script.ScriptService;
+
 import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.event.*;
@@ -11,6 +14,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.plaf.metal.*;
 
@@ -64,7 +68,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 	IJ.getDirectory("plugins") + "../" :
 	IJ.getDirectory("imagej");
 	Color[] presetColors = { new Color(192,192,192), new Color(213,170,213),
- 	new Color(170,170,255), new Color(170,213,255), new Color(170,213,170),
+		new Color(170,170,255), new Color(170,213,255), new Color(170,213,170),
 	new Color(255,255,170), new Color(250,224,175), new Color(255,170,170) };
 	private String imports;
 	private String bshPath;
@@ -246,69 +250,69 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 		}
     }
 
-	         protected String getURL(String path) {
-	          if (path.startsWith("plugins/")) path = "/"+path;
-                 if (path.startsWith("/")) {
-                         String fullPath = ijHome + path;
-                         if (new File(fullPath).exists())
-                                 return fullPath;
-                         if (path.startsWith("/plugins/"))
-                                 path = path.substring(8);
-                 } else if (path.startsWith("jar:file:")) {
-                	 String inputFile = "jar:file:"+IJ.getDirectory("plugins")+path.substring(9);
-                	 try {
-						URL u = new URL(inputFile);
-						return u.toString();
-					} catch (MalformedURLException e) {
-						IJ.error("Error getting config file ressource from JAR file.");
-						e.printStackTrace();
-					}
-                 }
+    protected String getURL(String path) {
+    	if (path.startsWith("plugins/")) path = "/"+path;
+    	if (path.startsWith("/")) {
+    		String fullPath = ijHome + path;
+    		if (new File(fullPath).exists())
+    			return fullPath;
+    		if (path.startsWith("/plugins/"))
+    			path = path.substring(8);
+    	} else if (path.startsWith("jar:file:")) {
+    		String inputFile = "jar:file:"+IJ.getDirectory("plugins")+path.substring(9);
+    		try {
+    			URL u = new URL(inputFile);
+    			return u.toString();
+    		} catch (MalformedURLException e) {
+    			IJ.error("Error getting config file ressource from JAR file.");
+    			e.printStackTrace();
+    		}
+    	}
 
-                 URL url = getClass().getResource(path);
-                 if (url == null) {
-                         url = getClass().getResource("/ActionBar/" + path);
+    	URL url = getClass().getResource(path);
+    	if (url == null) {
+    		url = getClass().getResource("/ActionBar/" + path);
             if (url == null) {
-                                 throw new RuntimeException("Cannot find resource '" + path + "'");
-                         }
-                 }
-                 return url.toString();
-         }
+            	throw new RuntimeException("Cannot find resource '" + path + "'");
+            }
+        }
+        return url.toString();
+    }
 
-         protected void runMacro(String path) {
-                 String url = getURL(path);
-                 if (url.startsWith("jar:")) try {
-                         String macro = readString(new URL(url).openStream());
-                         new MacroRunner(macro);
-                         return;
-                 } catch (Exception e) {
-                         IJ.handleException(e);
-                 }
+    protected void runMacro(String path) {
+    	String url = getURL(path);
+    	if (url.startsWith("jar:")) try {
+    		String macro = readString(new URL(url).openStream());
+    		new MacroRunner(macro);
+    		return;
+    	} catch (Exception e) {
+    		IJ.handleException(e);
+    	}
         else try {
             File macro = new File(new URL(url).toURI());
-                         new MacroRunner(macro);
+            new MacroRunner(macro);
         } catch (Exception e) {
-                IJ.handleException(e);
-                 }
-         }
+        	IJ.handleException(e);
+        }
+    }
 
-         protected String readString(InputStream in) {
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                 StringBuffer buffer = new StringBuffer();
-                 char[] buf = new char[16384];
-                 try {
-                         for (;;) {
-                                 int count = reader.read(buf);
-                                 if (count < 0)
-                                         break;
-                                 buffer.append(buf, 0, count);
-                         }
-                         reader.close();
-                 } catch (IOException e) {
-                         IJ.handleException(e);
-                 }
-                 return buffer.toString();
-         }
+    protected String readString(InputStream in) {
+    	BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    	StringBuffer buffer = new StringBuffer();
+    	char[] buf = new char[16384];
+    	try {
+    		for (;;) {
+    			int count = reader.read(buf);
+    			if (count < 0)
+    				break;
+    			buffer.append(buf, 0, count);
+    		}
+    		reader.close();
+    	} catch (IOException e) {
+    		IJ.handleException(e);
+    	}
+    	return buffer.toString();
+    }
 
 	private void stickToActiveWindow() {
 		ImageWindow fw = WindowManager.getCurrentWindow();
@@ -360,23 +364,23 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 
 	private void designPanel() {
 		try {
-// 			File file = new File(path);
-// 			if (!file.exists())
-// 				IJ.error("Config File not found");
-// 			BufferedReader r = new BufferedReader(new FileReader(file));
+			// 			File file = new File(path);
+			// 			if (!file.exists())
+			// 				IJ.error("Config File not found");
+			// 			BufferedReader r = new BufferedReader(new FileReader(file));
 
-                      Reader reader;
-                      if (path.startsWith("jar:"))
-                              reader = new InputStreamReader(new URL(path).openStream());
-                       else {
+			Reader reader;
+			if (path.startsWith("jar:"))
+				reader = new InputStreamReader(new URL(path).openStream());
+			else {
                 File file = new File(path);
                 if (!file.exists()) {
-                                  frame.dispose();
-                                   IJ.error("Config File not found");
-                            }
-                             reader = new FileReader(file);
-                     }
-                      BufferedReader r = new BufferedReader(reader);
+                	frame.dispose();
+                	IJ.error("Config File not found");
+                }
+                reader = new FileReader(file);
+            }
+            BufferedReader r = new BufferedReader(reader);
 
 
 			while (true) {
@@ -479,16 +483,16 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 					do {
 						String attribLine = r.readLine();
 						if (attribLine==null) {
-						break;
+							break;
 						} else if (attribLine.trim().replace(" ","").startsWith("label=")){
-						label = attribLine.substring(attribLine.indexOf("=")+1);
+							label = attribLine.substring(attribLine.indexOf("=")+1);
 						} else if (attribLine.trim().replace(" ","").startsWith("icon=")){
-						icon = attribLine.substring(attribLine.indexOf("=")+1);
+							icon = attribLine.substring(attribLine.indexOf("=")+1);
 						} else if (attribLine.trim().replace(" ","").startsWith("bgcolor=")){
-						bgcolor = attribLine.substring(attribLine.indexOf("=")+1);
+							bgcolor = attribLine.substring(attribLine.indexOf("=")+1);
 						} else if (attribLine.trim().replace(" ","").startsWith("arg=")){
-						arg = attribLine.substring(attribLine.indexOf("=")+1);
-						argReached=true;
+							arg = attribLine.substring(attribLine.indexOf("=")+1);
+							argReached=true;
 						}
 					} while (!argReached);
 
@@ -506,7 +510,21 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 								break;
 							}
 						}
-					} if (arg.startsWith("<macro>")) {
+					} else if (arg.startsWith("<ijm>")) {
+						String code = "<ijm>";
+						while (true) {
+							String sc = r.readLine();
+							if (sc.equals(null)) {
+								break;
+							}
+							if (!sc.startsWith("</ijm>")) {
+								code = code + "\n" + sc;
+							} else {
+								arg = code;
+								break;
+							}
+						}
+					} else if (arg.startsWith("<macro>")) {
 						String code = "";
 						while (true) {
 							String sc = r.readLine();
@@ -577,10 +595,10 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 	URL imageURL = null;
 
 	if (path.startsWith("jar:file:")) {
-   	 String inputFile = path.substring(0, path.indexOf("!/")+2)+imgLocation;
+		String inputFile = path.substring(0, path.indexOf("!/")+2)+imgLocation;
 
-   	 try {
-   		imageURL = new URL(inputFile);
+		try {
+			imageURL = new URL(inputFile);
 		} catch (MalformedURLException e) {
 			IJ.error("Error getting icon file ressource from JAR file.");
 			e.printStackTrace();
@@ -657,7 +675,17 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				bshPath = cmd.substring(5, cmd.length()).trim();
 				evalBeanshell(bshPath);
 				// IJ.showStatus("beanshell button:"+bshPath);
-
+			} else if (cmd.startsWith("<ijm>")) {
+				String macro = cmd.substring(5, cmd.length()).trim();
+				Context context = (Context) IJ.runPlugIn("org.scijava.Context", "");
+				ScriptService scriptService = context.service(ScriptService.class);
+				try {
+					scriptService.run("actionBarButton.ijm", macro, true);
+				} catch (IOException exc) {
+					IJ.error("Error in ijm script");
+				} catch (ScriptException exc) {
+					IJ.error("Error in ijm script");
+				}
 			} else {
 				try {
 					new MacroRunner(cmd + "\n" + codeLibrary);
@@ -676,34 +704,34 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 
 		private void evalBeanshell( final String bshScript) {
 			// TODO Auto-generated method stub
-			  imports =
-					"import ij.*;"+
-					"import ij.gui.*;"+
-					"import ij.process.*;"+
-					"import ij.measure.*;"+
-					"import ij.util.*;"+
-					"import ij.plugin.*;"+
-					"import ij.io.*;"+
-					"import ij.plugin.filter.*;"+
-					"import ij.plugin.frame.*;"+
-					"import java.lang.*;"+
-					"import java.awt.*;"+
-					"import java.awt.image.*;"+
-					"import java.awt.geom.*;"+
-					"import java.util.*;"+
-					"import java.io.*;"+
-					"print(arg) {IJ.log(\"\"+arg);}\n";
+			imports =
+			"import ij.*;"+
+			"import ij.gui.*;"+
+			"import ij.process.*;"+
+			"import ij.measure.*;"+
+			"import ij.util.*;"+
+			"import ij.plugin.*;"+
+			"import ij.io.*;"+
+			"import ij.plugin.filter.*;"+
+			"import ij.plugin.frame.*;"+
+			"import java.lang.*;"+
+			"import java.awt.*;"+
+			"import java.awt.image.*;"+
+			"import java.awt.geom.*;"+
+			"import java.util.*;"+
+			"import java.io.*;"+
+			"print(arg) {IJ.log(\"\"+arg);}\n";
 			try {
 				if (bsh!=null) {
 					Thread newThread = new Thread(new Runnable() {
-					    @Override
-					    public void run() {
-							try {
-								bsh.eval(imports+bshScript);
-							} catch (EvalError e) {
-								e.printStackTrace();
+							@Override
+							public void run() {
+								try {
+									bsh.eval(imports+bshScript);
+								} catch (EvalError e) {
+									e.printStackTrace();
+								}
 							}
-					    }
 					});
 					newThread.start();
 				}
@@ -713,7 +741,7 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 				}
 			} catch(Throwable e) {
 				String msg = e.getMessage();
-					IJ.log(msg);
+				IJ.log(msg);
 
 			}
 		}
@@ -763,92 +791,92 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			frame.setAlwaysOnTop(true);
 		}
 
-       public static void callFunctionFinder() {
-               new FunctionFinder();
-       }
+		public static void callFunctionFinder() {
+			new FunctionFinder();
+		}
 
-		         public static void pasteIntoEditor(String text) {
-                 Component component = getTextArea();
-                 if (component == null)
-                         return;
-                 if (component instanceof TextArea) {
-                         TextArea textArea = (TextArea)component;
-                         int begin = textArea.getSelectionStart();
-                         int end = textArea.getSelectionEnd();
-                         int pos;
-                         if (begin < 0) {
-                                 pos = textArea.getCaretPosition();
-                                 textArea.insert(text, pos);
-                                 pos += text.length();
-                         }
-                         else {
-                                 try {
-                                         textArea.replaceRange(text, begin, end);
-                                         pos = begin + text.length();
-                                 }
-                                 catch (Exception e2) {
-                                         return;
-                                 }
-                         }
-                         textArea.setCaretPosition(pos);
-                 }
-                 else if (component instanceof JTextArea) {
-                         JTextArea textArea = (JTextArea)component;
-                         int begin = textArea.getSelectionStart();
-                         int end = textArea.getSelectionEnd();
-                         int pos;
-                         if (begin < 0) {
-                                 pos = textArea.getCaretPosition();
-                                 textArea.insert(text, pos);
-                                 pos += text.length();
-                         }
-                         else {
-                                 try {
-                                         textArea.replaceRange(text, begin, end);
-                                         pos = begin + text.length();
-                                 }
-                                 catch (Exception e2) {
-                                         return;
-                                 }
-                         }
-                         textArea.setCaretPosition(pos);
-                 }
-         }
+		public static void pasteIntoEditor(String text) {
+			Component component = getTextArea();
+			if (component == null)
+				return;
+			if (component instanceof TextArea) {
+				TextArea textArea = (TextArea)component;
+				int begin = textArea.getSelectionStart();
+				int end = textArea.getSelectionEnd();
+				int pos;
+				if (begin < 0) {
+					pos = textArea.getCaretPosition();
+					textArea.insert(text, pos);
+					pos += text.length();
+				}
+				else {
+					try {
+						textArea.replaceRange(text, begin, end);
+						pos = begin + text.length();
+					}
+					catch (Exception e2) {
+						return;
+					}
+				}
+				textArea.setCaretPosition(pos);
+			}
+			else if (component instanceof JTextArea) {
+				JTextArea textArea = (JTextArea)component;
+				int begin = textArea.getSelectionStart();
+				int end = textArea.getSelectionEnd();
+				int pos;
+				if (begin < 0) {
+					pos = textArea.getCaretPosition();
+					textArea.insert(text, pos);
+					pos += text.length();
+				}
+				else {
+					try {
+						textArea.replaceRange(text, begin, end);
+						pos = begin + text.length();
+					}
+					catch (Exception e2) {
+						return;
+					}
+				}
+				textArea.setCaretPosition(pos);
+			}
+		}
 
-         protected static Component getTextArea() {
-                 Frame front = WindowManager.getFrontWindow();
-                 Component result = getTextArea(front);
-                 if (result != null)
-                         return result;
+		protected static Component getTextArea() {
+			Frame front = WindowManager.getFrontWindow();
+			Component result = getTextArea(front);
+			if (result != null)
+				return result;
 
-                 // look at the other frames
-                 Frame[] frames = WindowManager.getNonImageWindows();
-                 for (int i = frames.length - 1; i >= 0; i--) {
-                         result = getTextArea(frames[i]);
-                         if (result != null)
-                                 return result;
-                 }
-                 return null;
-         }
+			// look at the other frames
+			Frame[] frames = WindowManager.getNonImageWindows();
+			for (int i = frames.length - 1; i >= 0; i--) {
+				result = getTextArea(frames[i]);
+				if (result != null)
+					return result;
+			}
+			return null;
+		}
 
-         protected static Component getTextArea(Container container) {
-                 return getTextArea(container, 6);
-         }
+		protected static Component getTextArea(Container container) {
+			return getTextArea(container, 6);
+		}
 
-         protected static Component getTextArea(Container container, int maxDepth) {
-                 if (container == null)
-                         return null;
-                 for (Component component : container.getComponents()) {
-                         if ((component instanceof TextArea || component instanceof JTextArea) && component.isVisible())
-                                 return component;
-                         if (maxDepth > 0 && (component instanceof Container)) {
-                                 Component result = getTextArea((Container)component);
-                                 if (result != null)
-                                         return result;
-                         }
-                 }
-                 return null;
-         }
+		protected static Component getTextArea(Container container, int maxDepth) {
+			if (container == null)
+				return null;
+			for (Component component : container.getComponents()) {
+				if ((component instanceof TextArea || component instanceof JTextArea) && component.isVisible())
+					return component;
+				if (maxDepth > 0 && (component instanceof Container)) {
+					Component result = getTextArea((Container)component);
+					if (result != null)
+						return result;
+				}
+			}
+			return null;
+		}
 
 		// Droptarget Listener methods
 		public void drop(DropTargetDropEvent dtde)  {
@@ -960,13 +988,13 @@ public class Action_Bar implements PlugIn, ActionListener, DropTargetListener, R
 			IJ.showStatus("Drag files to process");
 		}
 
-    void showAbout() {
-        GenericDialog gd = new GenericDialog("About Action Bar...");
-        gd.addMessage("Action Bar by Jerome Mutterer");
-        gd.addMessage("For more info, press 'Help'");
-        gd.addMessage("Version: " + VERSION);
-        gd.addHelp("http://imagejdocu.tudor.lu/doku.php?id=plugin:utilities:action_bar:start");
-        gd.hideCancelButton();
-        gd.showDialog();
-    }
+		void showAbout() {
+			GenericDialog gd = new GenericDialog("About Action Bar...");
+			gd.addMessage("Action Bar by Jerome Mutterer");
+			gd.addMessage("For more info, press 'Help'");
+			gd.addMessage("Version: " + VERSION);
+			gd.addHelp("http://imagejdocu.tudor.lu/doku.php?id=plugin:utilities:action_bar:start");
+			gd.hideCancelButton();
+			gd.showDialog();
+		}
 }
